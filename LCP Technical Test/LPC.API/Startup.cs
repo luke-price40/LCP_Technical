@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Application.Interfaces.Persistence;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -29,6 +30,12 @@ namespace LPC.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            addSwagger(services);
+
+            var assembly = AppDomain.CurrentDomain.Load("Application");
+            services.AddAutoMapper(assembly);
+            services.AddMediatR(assembly);
+
             services.AddDbContext<LCPDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("ConnectionString")));
 
@@ -46,6 +53,12 @@ namespace LPC.API
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "LPC API");
+            });
+
             app.UseHttpsRedirection();
 
             app.UseRouting();
@@ -56,6 +69,21 @@ namespace LPC.API
             {
                 endpoints.MapControllers();
             });
+
+        }
+
+        private void addSwagger(
+            IServiceCollection services)
+        {
+            services.AddSwaggerGen(
+                c =>
+                {
+                    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+                    {
+                        Version = "v1",
+                        Title = "LPC API"
+                    });
+                });
         }
     }
 }
